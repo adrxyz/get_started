@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_started/screens/home_screen.dart';
 import 'package:get_started/auth_text_field.dart';
+import 'package:get_started/sign_in/sign_in.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -108,6 +109,29 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SignInScreen()),
+                  );
+                },
+                child: RichText(
+                  text: const TextSpan(
+                    text: 'Don\'t have an account? ',
+                    style: TextStyle(color: Color(0xFF5D6B6B)),
+                    children: [
+                      TextSpan(
+                        text: 'Sign up',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 56, 180, 194),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

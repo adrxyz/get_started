@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_started/screens/confirm_screen.dart';
 import 'package:get_started/auth_text_field.dart';
+import 'package:get_started/login/login_screen.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -41,6 +42,11 @@ class SignInScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
               const AuthTextField(
+                labelText: 'Full Name',
+                icon: Icons.person_outline,
+              ),
+              const SizedBox(height: 20),
+              const AuthTextField(
                 labelText: 'Username',
                 icon: Icons.person,
               ),
@@ -52,7 +58,19 @@ class SignInScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const AuthTextField(
+                labelText: 'Phone Number',
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20),
+              const AuthTextField(
                 labelText: 'Password',
+                icon: Icons.lock,
+                isPassword: true,
+              ),
+              const SizedBox(height: 20),
+              const AuthTextField(
+                labelText: 'Confirm Password',
                 icon: Icons.lock,
                 isPassword: true,
               ),
@@ -114,6 +132,29 @@ class SignInScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                },
+                child: RichText(
+                  text: const TextSpan(
+                    text: 'Already have an account? ',
+                    style: TextStyle(color: Color(0xFF5D6B6B)),
+                    children: [
+                      TextSpan(
+                        text: 'Log in',
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 56, 180, 194),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
