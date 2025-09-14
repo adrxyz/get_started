@@ -20,12 +20,13 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
-  // A nullable string to hold any Firebase authentication error messages
+  // Nullable strings to hold various error messages
   String? _firebaseErrorMessage;
-  // A nullable string to hold password validation error messages
   String? _passwordMatchErrorMessage;
-  // A nullable string to hold email validation error messages
+  String? _passwordLengthErrorMessage; // New state variable for password length
   String? _emailErrorMessage;
+  String? _phoneNumberErrorMessage;
+  String? _fieldErrorMessage;
 
   // This function handles the sign-up process when the button is pressed.
   Future<void> _signUp() async {
@@ -33,13 +34,30 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() {
       _firebaseErrorMessage = null;
       _passwordMatchErrorMessage = null;
+      _passwordLengthErrorMessage = null; // Clear new error message
       _emailErrorMessage = null;
+      _phoneNumberErrorMessage = null;
+      _fieldErrorMessage = null;
     });
 
-    // Check if the email field is empty and set an error message.
-    if (_emailController.text.trim().isEmpty) {
+    // --- New Validation Logic ---
+    // Check if any of the required fields are empty
+    if (_fullNameController.text.trim().isEmpty ||
+        _usernameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _phoneNumberController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty ||
+        _confirmPasswordController.text.trim().isEmpty) {
       setState(() {
-        _emailErrorMessage = 'Please enter an email address to sign up.';
+        _fieldErrorMessage = 'Please insert information.';
+      });
+      return; // Stop the sign-up process
+    }
+
+    // Check if password has a minimum length
+    if (_passwordController.text.trim().length < 6) {
+      setState(() {
+        _passwordLengthErrorMessage = 'Password must be 6 or more characters.';
       });
       return; // Stop the sign-up process
     }
@@ -52,6 +70,25 @@ class _SignInScreenState extends State<SignInScreen> {
       return; // Stop the sign-up process
     }
 
+    // Email format validation (using a regex for a more robust check)
+    final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    if (!emailRegex.hasMatch(_emailController.text.trim())) {
+      setState(() {
+        _emailErrorMessage = 'Invalid email.';
+      });
+      return; // Stop the sign-up process
+    }
+
+    // Phone number validation (must only contain digits)
+    final phoneNumber = _phoneNumberController.text.trim();
+    if (phoneNumber.isNotEmpty && !RegExp(r'^[0-9]+$').hasMatch(phoneNumber)) {
+      setState(() {
+        _phoneNumberErrorMessage = 'Invalid.';
+      });
+      return; // Stop the sign-up process
+    }
+
+    // --- Firebase Authentication ---
     try {
       // Create a new user with email and password using Firebase Authentication
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -60,7 +97,6 @@ class _SignInScreenState extends State<SignInScreen> {
       );
 
       // If the user creation is successful, navigate to the ConfirmScreen.
-      // The 'mounted' check ensures we don't try to navigate if the widget is no longer in the tree.
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const ConfirmScreen()),
@@ -134,6 +170,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
               const SizedBox(height: 40),
+              // Display general empty field error message
+              if (_fieldErrorMessage != null) ...[
+                Text(
+                  _fieldErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+              ],
               AuthTextField(
                 labelText: 'Full Name',
                 icon: Icons.person_outline,
@@ -168,6 +213,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 keyboardType: TextInputType.phone,
                 controller: _phoneNumberController,
               ),
+              // Display phone number error message
+              if (_phoneNumberErrorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _phoneNumberErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               const SizedBox(height: 20),
               AuthTextField(
                 labelText: 'Password',
@@ -175,6 +229,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 isPassword: true,
                 controller: _passwordController,
               ),
+              // Display password length error message
+              if (_passwordLengthErrorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _passwordLengthErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               const SizedBox(height: 20),
               AuthTextField(
                 labelText: 'Confirm Password',
