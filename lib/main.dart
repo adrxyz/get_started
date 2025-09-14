@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_started/screens/onboarding_screen.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -12,10 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Onboarding UI',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue, fontFamily: 'Roboto'),
       home: const OnboardingScreen(),
       debugShowCheckedModeBanner: false,
     );
