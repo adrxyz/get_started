@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get_started/screens/onboarding_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+// The main function is now asynchronous to allow for Firebase initialization.
+void main() async {
+  // Ensure that Flutter is initialized before calling Firebase functions.
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize the Firebase app using the default options for the current platform.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
   runApp(const MyApp());
 }
 
