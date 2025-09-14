@@ -24,6 +24,8 @@ class _SignInScreenState extends State<SignInScreen> {
   String? _firebaseErrorMessage;
   // A nullable string to hold password validation error messages
   String? _passwordMatchErrorMessage;
+  // A nullable string to hold email validation error messages
+  String? _emailErrorMessage;
 
   // This function handles the sign-up process when the button is pressed.
   Future<void> _signUp() async {
@@ -31,7 +33,16 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() {
       _firebaseErrorMessage = null;
       _passwordMatchErrorMessage = null;
+      _emailErrorMessage = null;
     });
+
+    // Check if the email field is empty and set an error message.
+    if (_emailController.text.trim().isEmpty) {
+      setState(() {
+        _emailErrorMessage = 'Please enter an email address to sign up.';
+      });
+      return; // Stop the sign-up process
+    }
 
     // Check if passwords match
     if (_passwordController.text.trim() != _confirmPasswordController.text.trim()) {
@@ -141,6 +152,15 @@ class _SignInScreenState extends State<SignInScreen> {
                 keyboardType: TextInputType.emailAddress,
                 controller: _emailController,
               ),
+              // Display email error message
+              if (_emailErrorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _emailErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               const SizedBox(height: 20),
               AuthTextField(
                 labelText: 'Phone Number',
