@@ -2,9 +2,91 @@ import 'package:flutter/material.dart';
 import 'package:get_started/screens/confirm_screen.dart';
 import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/login/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  // Controllers for all text fields
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  // A nullable string to hold any Firebase authentication error messages
+  String? _firebaseErrorMessage;
+  // A nullable string to hold password validation error messages
+  String? _passwordMatchErrorMessage;
+
+  // This function handles the sign-up process when the button is pressed.
+  Future<void> _signUp() async {
+    // Clear any previous error messages before attempting a new sign-up
+    setState(() {
+      _firebaseErrorMessage = null;
+      _passwordMatchErrorMessage = null;
+    });
+
+    // Check if passwords match
+    if (_passwordController.text.trim() != _confirmPasswordController.text.trim()) {
+      setState(() {
+        _passwordMatchErrorMessage = 'Passwords do not match.';
+      });
+      return; // Stop the sign-up process
+    }
+
+    try {
+      // Create a new user with email and password using Firebase Authentication
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      // If the user creation is successful, navigate to the ConfirmScreen.
+      // The 'mounted' check ensures we don't try to navigate if the widget is no longer in the tree.
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const ConfirmScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // Handle Firebase-specific errors and update the error message.
+      String message;
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'The account already exists for that email.';
+      } else {
+        message = e.message ?? 'An unknown Firebase error occurred.';
+      }
+      setState(() {
+        _firebaseErrorMessage = message;
+      });
+    } catch (e) {
+      // Catch any other unexpected errors and update the error message.
+      setState(() {
+        _firebaseErrorMessage = 'An unexpected error occurred: $e';
+      });
+    }
+  }
+
+  // Dispose all controllers when the widget is removed from the widget tree
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,48 +123,68 @@ class SignInScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Full Name',
                 icon: Icons.person_outline,
+                controller: _fullNameController,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Username',
                 icon: Icons.person,
+                controller: _usernameController,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Email',
                 icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Phone Number',
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
+                controller: _phoneNumberController,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Password',
                 icon: Icons.lock,
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Confirm Password',
                 icon: Icons.lock,
                 isPassword: true,
+                controller: _confirmPasswordController,
               ),
-              const SizedBox(height: 40),
+              // Display password match error message
+              if (_passwordMatchErrorMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _passwordMatchErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 20),
+              // Display Firebase error message if it exists
+              if (_firebaseErrorMessage != null) ...[
+                Text(
+                  _firebaseErrorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const ConfirmScreen()),
-                    );
-                  },
+                  onPressed: _signUp, // Call the _signUp function
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 56, 180, 194),
                     shape: RoundedRectangleBorder(
@@ -90,7 +192,7 @@ class SignInScreen extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Sign In', style: TextStyle(color: Colors.white, fontSize: 18)),
+                  child: const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 40),

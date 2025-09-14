@@ -5,6 +5,8 @@ class AuthTextField extends StatelessWidget {
   final IconData icon;
   final bool isPassword;
   final TextInputType keyboardType;
+  // This parameter is required to allow the parent widget to control the text field.
+  final TextEditingController? controller;
 
   const AuthTextField({
     super.key,
@@ -12,11 +14,13 @@ class AuthTextField extends StatelessWidget {
     required this.icon,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
+    this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       obscureText: isPassword,
       keyboardType: keyboardType,
       decoration: InputDecoration(
