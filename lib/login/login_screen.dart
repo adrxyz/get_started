@@ -1,10 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_started/screens/home_screen.dart';
 import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/sign_in/sign_in.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String? _errorMessage;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null; // Clear any previous error
+    });
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      // On successful login, navigate to the Home Screen
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          if (e.code == 'user-not-found') {
+            _errorMessage = 'No user found for that email.';
+          } else if (e.code == 'wrong-password') {
+            _errorMessage = 'Wrong password provided for that user.';
+          } else if (e.code == 'invalid-email') {
+            _errorMessage = 'The email address is not valid.';
+          } else {
+            _errorMessage = e.message;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'An unexpected error occurred. Please try again.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,35 +105,43 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Username or Email',
                 icon: Icons.person,
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              const AuthTextField(
+              AuthTextField(
                 labelText: 'Password',
                 icon: Icons.lock,
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 56, 180, 194),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Login', style: TextStyle(color: Colors.white, fontSize: 18)),
+              if (_errorMessage != null)
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                  textAlign: TextAlign.center,
                 ),
-              ),
+              const SizedBox(height: 20),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _login,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 56, 180, 194),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text('Login', style: TextStyle(color: Colors.white, fontSize: 18)),
+                      ),
+                    ),
               const SizedBox(height: 40),
               const Text(
                 'Or log in with',
@@ -79,11 +151,12 @@ class LoginScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // This is a placeholder for social login buttons.
+                  // You will need to install the relevant packages and add logic
+                  // to handle Google and Facebook sign-in.
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle Google login logic
-                    },
-                    icon: Image.asset('assets/images/google_logo.png', height: 24),
+                    onPressed: () {},
+                    icon: const Text('G'),
                     label: const Text('Google', style: TextStyle(color: Colors.black)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -95,10 +168,8 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 20),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle Facebook login logic
-                    },
-                    icon: Image.asset('assets/images/facebook_logo.png', height: 24),
+                    onPressed: () {},
+                    icon: const Text('f'),
                     label: const Text('Facebook', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1877F2),
