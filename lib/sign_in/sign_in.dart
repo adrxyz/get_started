@@ -1,73 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get_started/screens/confirm_screen.dart';
-import 'package:get_started/Authtextfield.dart';
+import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/login/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
-
-  @override
-  State<SignInScreen> createState() => _SignInScreenState();
-}
-
-class _SignInScreenState extends State<SignInScreen> {
-  // Controllers to get the text from the email and password fields
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  // A nullable string to hold any error messages from Firebase
-  String? _errorMessage;
-
-  // This function handles the sign-up process when the button is pressed.
-  Future<void> _signUp() async {
-    // Clear any previous error messages before attempting a new sign-up
-    setState(() {
-      _errorMessage = null;
-    });
-
-    try {
-      // Create a new user with email and password using Firebase Authentication
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      // If the user creation is successful, navigate to the ConfirmScreen.
-      // The 'mounted' check ensures we don't try to navigate if the widget is no longer in the tree.
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const ConfirmScreen()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      // Handle Firebase-specific errors and update the error message.
-      String message;
-      if (e.code == 'weak-password') {
-        message = 'The password provided is too weak.';
-      } else if (e.code == 'email-already-in-use') {
-        message = 'The account already exists for that email.';
-      } else {
-        message = e.message ?? 'An unknown Firebase error occurred.';
-      }
-      setState(() {
-        _errorMessage = message;
-      });
-    } catch (e) {
-      // Catch any other unexpected errors and update the error message.
-      setState(() {
-        _errorMessage = 'An unexpected error occurred: $e';
-      });
-    }
-  }
-
-  // Dispose the controllers when the widget is removed from the widget tree
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -114,11 +51,10 @@ class _SignInScreenState extends State<SignInScreen> {
                 icon: Icons.person,
               ),
               const SizedBox(height: 20),
-              AuthTextField( // Updated to use the controller
+              const AuthTextField(
                 labelText: 'Email',
                 icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
-                controller: _emailController,
               ),
               const SizedBox(height: 20),
               const AuthTextField(
@@ -127,11 +63,10 @@ class _SignInScreenState extends State<SignInScreen> {
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 20),
-              AuthTextField( // Updated to use the controller
+              const AuthTextField(
                 labelText: 'Password',
                 icon: Icons.lock,
                 isPassword: true,
-                controller: _passwordController,
               ),
               const SizedBox(height: 20),
               const AuthTextField(
@@ -140,18 +75,14 @@ class _SignInScreenState extends State<SignInScreen> {
                 isPassword: true,
               ),
               const SizedBox(height: 40),
-              // Display error message if it exists
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _signUp, // Call the _signUp function
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ConfirmScreen()),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 56, 180, 194),
                     shape: RoundedRectangleBorder(
