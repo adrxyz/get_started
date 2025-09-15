@@ -1,32 +1,61 @@
 import 'package:flutter/material.dart';
 
-class AuthTextField extends StatelessWidget {
+class AuthTextField extends StatefulWidget {
   final String labelText;
   final IconData icon;
   final bool isPassword;
   final TextInputType keyboardType;
-  // This parameter is required to allow the parent widget to control the text field.
   final TextEditingController? controller;
 
   const AuthTextField({
-    super.key,
+    Key? key,
     required this.labelText,
     required this.icon,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
     this.controller,
-  });
+  }) : super(key: key);
+
+  @override
+  State<AuthTextField> createState() => _AuthTextFieldState();
+}
+
+class _AuthTextFieldState extends State<AuthTextField> {
+  late bool _passwordVisible;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _passwordVisible with the isPassword property.
+    // This makes sure the password field is obscured by default.
+    _passwordVisible = widget.isPassword;
+  }
 
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      keyboardType: keyboardType,
+      controller: widget.controller,
+      obscureText: _passwordVisible,
+      keyboardType: widget.keyboardType,
       decoration: InputDecoration(
-        labelText: labelText,
+        labelText: widget.labelText,
         labelStyle: const TextStyle(color: Color(0xFF5D6B6B)),
-        prefixIcon: Icon(icon, color: const Color.fromARGB(255, 54, 169, 182)),
+        prefixIcon: Icon(widget.icon, color: const Color.fromARGB(255, 54, 169, 182)),
+        // Conditionally add the suffix icon only for password fields
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(
+                  _passwordVisible ? Icons.visibility_off : Icons.visibility,
+                  color: const Color.fromARGB(255, 54, 169, 182),
+                ),
+                onPressed: () {
+                  // Toggle the state of password visibility
+                  setState(() {
+                    _passwordVisible = !_passwordVisible;
+                  });
+                },
+              )
+            : null,
         filled: true,
         fillColor: const Color(0xFFE1EAEA),
         border: OutlineInputBorder(
