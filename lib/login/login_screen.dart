@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get_started/screens/home_screen.dart';
+import '../screens/menu_view.dart';
 import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/sign_in/sign_in.dart';
 
@@ -57,7 +57,7 @@ class LoginScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(builder: (context) => MenuView()),
                     );
                   },
                   style: ElevatedButton.styleFrom(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:get_started/screens/home_screen.dart';
+import 'menu_view.dart';
 
 class GetStartedScreen extends StatelessWidget {
   const GetStartedScreen({super.key});
@@ -37,7 +37,7 @@ class GetStartedScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      MaterialPageRoute(builder: (context) => MenuView()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
