@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:get_started/models/product.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://api.example.com/products'; // Replace with your actual API endpoint
+  static const String _baseUrl = 'http://10.0.2.2:3000/products'; // Replace with your actual API endpoint
 
   Future<List<Product>> fetchProducts() async {
     final response = await http.get(Uri.parse(_baseUrl));
