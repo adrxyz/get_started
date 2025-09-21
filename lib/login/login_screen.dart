@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:get_started/screens/home_screen.dart';
+ // This import is no longer needed but kept for context.
 import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/sign_in/sign_in.dart';
+import 'package:get_started/screens/product_list_screen.dart'; // Import the new screen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,10 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // On successful login, navigate to the Home Screen
+      // On successful login, navigate to the Product List Screen
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const ProductListScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -151,9 +152,6 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // This is a placeholder for social login buttons.
-                  // You will need to install the relevant packages and add logic
-                  // to handle Google and Facebook sign-in.
                   ElevatedButton.icon(
                     onPressed: () {},
                     icon: const Text('G'),

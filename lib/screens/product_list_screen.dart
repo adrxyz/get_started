@@ -1,46 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:get_started/screens/onboarding_screen.dart';
-import 'firebase_options.dart';
-
-// The main function is now asynchronous to allow for Firebase initialization.
-void main() async {
-  // Ensure that Flutter is initialized before calling Firebase functions.
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize the Firebase app using the default options for the current platform.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Onboarding UI',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
-        useMaterial3: true,
-      ),
-      // The initial route is the OnboardingScreen as per your request.
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const OnboardingScreen(),
-        '/products': (context) => const ProductListScreen(),
-        // You can add other routes here as needed
-      },
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
 
 // Define the Product data model
 class Product {
@@ -93,14 +53,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        // Parse the JSON array
         List<dynamic> productJson = jsonDecode(response.body);
         return productJson.map((json) => Product.fromJson(json)).toList();
       } else {
         throw Exception('Failed to load products. Status Code: ${response.statusCode}');
       }
     } catch (e) {
-      // Re-throw the exception to be caught by the FutureBuilder
       throw Exception('Failed to connect to the server: $e');
     }
   }
@@ -217,7 +175,7 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Future<Product> futureProduct;
-  final String apiUrl = 'http://localhost:3000/products/';
+  final String apiUrl = 'http://10.0.2.2:3000/products';
 
   @override
   void initState() {
