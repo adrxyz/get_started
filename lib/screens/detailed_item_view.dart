@@ -17,9 +17,9 @@ class ItemDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F0E0), // Background color from the first screen
+      backgroundColor: const Color(0xFFF0F0E0),
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Transparent app bar
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -58,7 +58,8 @@ class ItemDetailView extends StatelessWidget {
                       topLeft: Radius.circular(30),
                       topRight: Radius.circular(30),
                     ),
-                    child: Image.asset(itemImage, fit: BoxFit.cover),
+                    // Use Image.network to load the image from the URL provided by the API
+                    child: Image.network(itemImage, fit: BoxFit.cover),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(20),

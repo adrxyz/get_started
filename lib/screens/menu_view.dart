@@ -1,5 +1,9 @@
+// lib/views/menu_view.dart
+
 import 'package:flutter/material.dart';
-import 'detailed_item_view.dart'; // Make sure this path is correct
+import 'package:get_started/models/product.dart';
+import 'package:get_started/services/api_service.dart';
+import 'detailed_item_view.dart';
 
 class MenuView extends StatefulWidget {
   const MenuView({super.key});
@@ -9,8 +13,20 @@ class MenuView extends StatefulWidget {
 }
 
 class _MenuViewState extends State<MenuView> {
-  int _selectedCategoryIndex = 4; // 'Sushi' is the selected category
-  int _selectedFoodTypeIndex = 1; // 'Veggie' is the selected food type
+  int _selectedCategoryIndex = 4;
+  int _selectedFoodTypeIndex = 1;
+
+  late Future<List<Product>> _productsFuture;
+
+  // Define the category and food type names
+  final List<String> _categoryNames = ['Noodles', 'Rice', 'Soup', 'Salad', 'Sushi'];
+  final List<String> _foodTypeNames = ['Seafood', 'Veggie', 'Meat', 'Poultry'];
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = ApiService().fetchProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,14 +57,61 @@ class _MenuViewState extends State<MenuView> {
           children: [
             _buildCategoryTabs(),
             _buildFoodTypeTabs(),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
               child: Text(
-                'Soup',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                _categoryNames[_selectedCategoryIndex], // Display the current category name
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
-            _buildSoupMenuGrid(),
+            FutureBuilder<List<Product>>(
+              future: _productsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No products found.'));
+                } else {
+                  // Filter the products based on the selected category and food type
+                  final String selectedCategory = _categoryNames[_selectedCategoryIndex];
+                  final String selectedFoodType = _foodTypeNames[_selectedFoodTypeIndex];
+                  
+                  final filteredProducts = snapshot.data!.where((product) {
+                    // This is where you filter the products. 
+                    // Make sure your Product model has these properties.
+                    return product.category == selectedCategory && product.foodType == selectedFoodType;
+                  }).toList();
+
+                  if (filteredProducts.isEmpty) {
+                    return const Center(child: Text('No items found in this category.'));
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.7,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredProducts.length, // Use the filtered list here
+                    itemBuilder: (context, index) {
+                      final product = filteredProducts[index]; // Use the filtered list here
+                      return _buildMenuItem(
+                        product.name,
+                        product.description,
+                        product.image,
+                        product.price,
+                      );
+                    },
+                  );
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -57,19 +120,33 @@ class _MenuViewState extends State<MenuView> {
 
   Widget _buildCategoryTabs() {
     return Container(
-      height: 70, // Adjusted height for a more compact design
+      height: 70,
       color: const Color(0xFF1A237E),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _categoryIconChip(0, Icons.ramen_dining, 'Noodles'),
-          _categoryIconChip(1, Icons.rice_bowl, 'Rice'),
-          _categoryIconChip(2, Icons.lunch_dining, 'Soup'),
-          _categoryIconChip(3, Icons.local_florist, 'Salat'),
-          _categoryIconChip(4, Icons.tapas, 'Sushi'),
-        ],
+        children: _categoryNames.asMap().entries.map((entry) {
+          int index = entry.key;
+          String text = entry.value;
+          return _categoryIconChip(
+            index,
+            _getCategoryIcon(index), // A helper method to get the icon
+            text,
+          );
+        }).toList(),
       ),
     );
+  }
+
+  // A helper method for category icons
+  IconData _getCategoryIcon(int index) {
+    switch (index) {
+      case 0: return Icons.ramen_dining;
+      case 1: return Icons.rice_bowl;
+      case 2: return Icons.lunch_dining;
+      case 3: return Icons.local_florist;
+      case 4: return Icons.tapas;
+      default: return Icons.tapas;
+    }
   }
 
   Widget _buildFoodTypeTabs() {
@@ -77,12 +154,11 @@ class _MenuViewState extends State<MenuView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _foodTypeChip(0, 'Seafood'),
-          _foodTypeChip(1, 'Veggie'),
-          _foodTypeChip(2, 'Meat'),
-          _foodTypeChip(3, 'Poultry'),
-        ],
+        children: _foodTypeNames.asMap().entries.map((entry) {
+          int index = entry.key;
+          String text = entry.value;
+          return _foodTypeChip(index, text);
+        }).toList(),
       ),
     );
   }
@@ -101,7 +177,7 @@ class _MenuViewState extends State<MenuView> {
           border: Border(
             bottom: isSelected
                 ? const BorderSide(
-                    color: Color(0xFFE57373), // A light red color
+                    color: Color(0xFFE57373),
                     width: 2.0,
                   )
                 : BorderSide.none,
@@ -171,42 +247,10 @@ class _MenuViewState extends State<MenuView> {
     );
   }
 
-  Widget _buildSoupMenuGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 0.7,
-      padding: const EdgeInsets.all(16),
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      children: [
-        _buildMenuItem(
-            'Miso',
-            'Ramen, lotus root, daikon, radish, shiitake, garlic...',
-            'assets/images/image_1.png',
-            4),
-        _buildMenuItem(
-            'Chicken noodle',
-            'Ramen, pumpkin, greens, nori, tomatoes, chili...',
-            'assets/images/image_2.png',
-            5),
-        _buildMenuItem(
-            'Spicy',
-            'Ramen, vegetable broth, basil, paprika, carrot...',
-            'assets/images/image_3.png',
-            5),
-        _buildMenuItem(
-            'Tonkatsu',
-            'Ramen, vegetable broth, bean sprouts, carrots...',
-            'assets/images/image_4.png',
-            4),
-      ],
-    );
-  }
-
   Widget _buildMenuItem(
       String name, String description, String imagePath, int price) {
+    final fullImageUrl = 'http://10.0.2.2:3000/$imagePath';
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -214,7 +258,7 @@ class _MenuViewState extends State<MenuView> {
           MaterialPageRoute(
             builder: (context) => ItemDetailView(
               itemName: name,
-              itemImage: imagePath,
+              itemImage: fullImageUrl,
               itemDescription: description,
               itemPrice: price,
             ),
@@ -235,12 +279,11 @@ class _MenuViewState extends State<MenuView> {
                   height: 120,
                   decoration: const BoxDecoration(
                     color: Color(0xFF1A237E),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                   ),
                   child: Center(
                     child: ClipOval(
-                      child: Image.asset(imagePath,
+                      child: Image.network(fullImageUrl,
                           fit: BoxFit.cover, height: 100, width: 100),
                     ),
                   ),
