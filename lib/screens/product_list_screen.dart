@@ -2,44 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// Define the Product data model
+// Product data model
 class Product {
   final int id;
   final String name;
-  final String price;
-  final String detail;
-  final String imageUrl; // Added for product images
+  final String image;
+  final String description;
+  final int price;
 
-  Product({
+  const Product({
     required this.id,
     required this.name,
+    required this.image,
+    required this.description,
     required this.price,
-    required this.detail,
-    required this.imageUrl,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'] as int,
       name: json['name'] as String,
-      price: json['price'] as String,
-      detail: json['detail'] as String,
-      imageUrl: json['imageUrl'] as String,
+      image: json['image'] as String,
+      description: json['description'] as String,
+      price: json['price'] as int,
     );
   }
 }
 
-// Product List Screen
-class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({Key? key}) : super(key: key);
-
-  @override
-  State<ProductListScreen> createState() => _ProductListScreenState();
+// Function to parse the list of products from the JSON response
+List<Product> parseProducts(String responseBody) {
+  final parsed = json.decode(responseBody).cast<Map<String, dynamic>>();
+  return parsed.map<Product>((json) => Product.fromJson(json)).toList();
 }
 
-class _ProductListScreenState extends State<ProductListScreen> {
+// Function to fetch the products from the API
+Future<List<Product>> fetchProducts() async {
+  // Use the correct URL for Android emulator to connect to localhost
+  final response = await http.get(Uri.parse('http://10.0.2.2:3000/products'));
+
+  if (response.statusCode == 200) {
+    return parseProducts(response.body);
+  } else {
+    throw Exception('Failed to load products');
+  }
+}
+
+// Widget to display the list of products
+class ProductScreen extends StatefulWidget {
+  const ProductScreen({Key? key}) : super(key: key);
+
+  @override
+  _ProductScreenState createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends State<ProductScreen> {
   late Future<List<Product>> futureProducts;
-  final String apiUrl = 'http://localhost:3000/products';
 
   @override
   void initState() {
@@ -47,28 +64,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
     futureProducts = fetchProducts();
   }
 
-  // Function to fetch products from the API
-  Future<List<Product>> fetchProducts() async {
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode == 200) {
-        List<dynamic> productJson = jsonDecode(response.body);
-        return productJson.map((json) => Product.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load products. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to the server: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hi-Fi Shop & Service'),
-        centerTitle: true,
+        title: const Text('Products'),
       ),
       body: FutureBuilder<List<Product>>(
         future: futureProducts,
@@ -78,18 +78,36 @@ class _ProductListScreenState extends State<ProductListScreen> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (snapshot.hasData) {
-            return GridView.builder(
-              padding: const EdgeInsets.all(16.0),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16.0,
-                mainAxisSpacing: 16.0,
-                childAspectRatio: 0.7, // Adjust to fit content better
-              ),
+            return ListView.builder(
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
-                Product product = snapshot.data![index];
-                return ProductCard(product: product);
+                final product = snapshot.data![index];
+                return ListTile(
+                  title: Text(product.name),
+                  subtitle: Text('\$${product.price}'),
+                  leading: Image.network(
+                    product.image,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.broken_image, size: 50);
+                    },
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ItemDetailView(
+                          itemName: product.name,
+                          itemImage: product.image,
+                          itemDescription: product.description,
+                          itemPrice: product.price,
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
             );
           } else {
@@ -101,175 +119,61 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 }
 
-// Widget for a single product card
-class ProductCard extends StatelessWidget {
-  final Product product;
+// Widget for the product detail view
+class ItemDetailView extends StatelessWidget {
+  final String itemName;
+  final String itemImage;
+  final String itemDescription;
+  final int itemPrice;
 
-  const ProductCard({Key? key, required this.product}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () {
-          // Navigate to the ProductDetailScreen with the product ID
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProductDetailScreen(productId: product.id),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Center(
-                  child: Image.network(
-                    product.imageUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.image_not_supported, size: 60, color: Colors.grey);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                product.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                product.price,
-                style: const TextStyle(
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Product Detail Screen
-class ProductDetailScreen extends StatefulWidget {
-  final int productId;
-
-  const ProductDetailScreen({Key? key, required this.productId}) : super(key: key);
-
-  @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
-}
-
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  late Future<Product> futureProduct;
-  final String apiUrl = 'http://10.0.2.2:3000/products';
-
-  @override
-  void initState() {
-    super.initState();
-    futureProduct = fetchProductDetail(widget.productId);
-  }
-
-  // Function to fetch a single product by ID
-  Future<Product> fetchProductDetail(int id) async {
-    try {
-      final response = await http.get(Uri.parse('$apiUrl$id'));
-
-      if (response.statusCode == 200) {
-        return Product.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to load product detail. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to connect to the server: $e');
-    }
-  }
+  const ItemDetailView({
+    required this.itemName,
+    required this.itemImage,
+    required this.itemDescription,
+    required this.itemPrice,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Product Detail'),
-        centerTitle: true,
+        title: Text(itemName),
       ),
-      body: FutureBuilder<Product>(
-        future: futureProduct,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            Product product = snapshot.data!;
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Image.network(
-                        product.imageUrl,
-                        height: 250,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.image_not_supported, size: 150, color: Colors.grey);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      product.price,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Product Details:',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      product.detail,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Image.network(
+                  itemImage,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.broken_image, size: 100);
+                  },
                 ),
               ),
-            );
-          } else {
-            return const Center(child: Text('Product not found.'));
-          }
-        },
+              const SizedBox(height: 20),
+              Text(
+                itemName,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '\$${itemPrice}',
+                style: const TextStyle(fontSize: 20, color: Colors.green),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                itemDescription,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
  // This import is no longer needed but kept for context.
 import 'package:get_started/auth_text_field.dart';
 import 'package:get_started/sign_in/sign_in.dart';
-import 'package:get_started/screens/product_list_screen.dart'; // Import the new screen
+import 'package:get_started/screens/menu_view.dart'; // Import the new screen
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
       // On successful login, navigate to the Product List Screen
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ProductListScreen()),
+          MaterialPageRoute(builder: (context) => MenuView()),
         );
       }
     } on FirebaseAuthException catch (e) {
